@@ -11,7 +11,12 @@
 	  	<label for="category">类型：</label>
 	  	<select name="category" id="category">
 	   		{% for category in categories %}
-	   		<option value="{{category.id}}">{{category.name}}</option>
+	   			{% if content.category._id.toString() === category._id.toString() %}
+	   			<option selected value="{{category._id.toString()}}">{{category.name}}</option>
+	   			{% else %}
+	   			<option value="{{category._id.toString()}}">{{category.name}}</option>
+	   			{% endif %}
+	   			
 	   		{% endfor %}
 	   	</select>
 	   <!-- <input type="text" class="form-control" id="category" name="category" value="{{content.category.name}}" disabled>-->

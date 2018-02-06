@@ -11,6 +11,9 @@
 		<th>ID</th>
 		<th>内容类型</th>
 		<th>标题</th>
+		<th>作者</th>
+		<th>时间</th>
+		<th>点击量</th>
 		<th>简介</th>
 		<th>内容</th>
 		<th>操作</th>
@@ -20,6 +23,9 @@
 			<td>{{content._id.toString()}}</td>
 			<td>{{content.category.name}}</td>
 			<td>{{content.title}}</td>
+			<td>{{content.user.username}}</td>
+			<td>{{content.addTime|date('Y年m月d日 H:i:s',-480, 'CCT')}}</td>
+			<td>{{content.views}}</td>
 			<td>{{content.description}}</td>
 			<td>{{content.content}}</td>
 			<td>

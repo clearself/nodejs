@@ -77,7 +77,6 @@ router.get('/category/edit',function(req,res,next){
 	Category.findOne({
 		_id:id
 	}).then(function(category){
-		console.log(category)
 		if(!category){
 			res.render('admin/error',{
 				message:'分类信息不存在'
@@ -98,7 +97,6 @@ router.post('/category/edit',function(req,res,next){
 	Category.findOne({
 		_id:id
 	}).then(function(category){
-		console.log(category)
 		if(!category){
 			res.render('admin/error',{
 				message:'分类信息不存在'
@@ -162,7 +160,7 @@ router.get('/category/delete',function(req,res,next){
 	}).then(function(){
 		res.render('admin/success',{
 			message:'删除分类成功',
-			url:'/admin//category'
+			url:'/admin/category'
 		});
 	})
 })
@@ -180,7 +178,6 @@ router.get('/category/add',function(req,res,next){
  * */
 router.post('/category/add',function(req,res,next){
 	var name = req.body.name||'';
-	console.log(req.body)
 	if(name === ''){
 		res.render('admin/error',{
 			message:'分类名称不能为空'
@@ -228,9 +225,8 @@ router.get('/content',function(req,res,nex){
 		page = Math.min(page,totalPage);
 		page = Math.max(page,1);
 		var skip = (page-1)*limit;
-		Content.find().sort({_id:-1}).limit(limit).skip(skip).populate('category').then(function(contentData){
+		Content.find().sort({_id:-1}).limit(limit).skip(skip).populate('category user').then(function(contentData){
 			console.log(contentData)
-			
 			res.render('admin/content_index',{
 				contentData:contentData,
 				page:page,
@@ -265,7 +261,6 @@ router.get('/content/add',function(req,res,nex){
 })
 ////内容添加请求
 router.post('/content/add',function(req,res,nex){
-	console.log(req.body)
 	var category = req.body.category;
 	var title = req.body.title||'';
 	var description = req.body.description||'';
@@ -298,10 +293,12 @@ router.post('/content/add',function(req,res,nex){
 	new Content({
 		category:category,
 		title:title,
+		user:req.userInfo._id.toString(),
 		description:description,
 		content:content
 	}).save().then(function(){
 		res.render('admin/success',{
+				userInfo:req.userInfo,
 				message:'内容保存成功',
 				url:'/admin/content'
 		});
@@ -310,76 +307,87 @@ router.post('/content/add',function(req,res,nex){
 //修改内容页面回显
 router.get('/content/edit',function(req,res,next){
 	var id = req.query.id||'';
-	Content.findOne({
-		_id :id
-	}).populate('category').then(function(content){
-		console.log(content)
-		if(!content){
-			res.render('admin/error',{
-				message:'内容信息不存在'
-			});
-		}else{
-			res.render('admin/content_edit',{
-				content:content
-			});
-		}
-		
+	Category.find().then(function(categories){
+		console.log(categories)
+		Content.findOne({
+			_id :id
+		}).populate('category').then(function(content){
+			console.log(content)
+			if(!content){
+				res.render('admin/error',{
+					message:'内容信息不存在'
+				});
+			}else{
+				res.render('admin/content_edit',{
+					content:content,
+					categories:categories
+				});
+			}
+			
+		})
 	})
+	
 })
 
 
 
 //修改内容后提交
-//router.post('/content/edit',function(req,res,next){
-//	var id = req.body.categoryid||'';
-//	var name = req.body.name||'';
-//	Category.findOne({
-//		_id:id
-//	}).then(function(category){
-//		console.log(category)
-//		if(!category){
-//			res.render('admin/error',{
-//				message:'分类信息不存在'
-//			});
-//			return Promise().reject();
-//		}else{
-//			//判断用户有没有做修改
-//			
-//			if(name === category.name){
-//				res.render('admin/success',{
-//					message:'修改分类成功',
-//					url:'/admin//category'
-//				});
-//				return Promise().reject();
-//			}else{
-//				//如果存在需要验证修改后的名称是否已经在数据库中存在
-//				return Category.findOne({
-//						_id:{$ne:id},
-//						name:name
-//					})
-//			}
-//			
-//		}
-//		
-//	}).then(function(category){
-//		if(category){
-//			res.render('admin/error',{
-//				message:'该分类已存在'
-//			});
-//			return Promise().reject();
-//		}else{
-//			 return Category.update({
-//						_id:id
-//					},{
-//						name:name
-//				})
-//		}
-//	}).then(function(category){
-//			res.render('admin/success',{
-//				message:'修改分类成功',
-//				url:'/admin//category'
-//			});
-//	})
-//})
+router.post('/content/edit',function(req,res,next){
+	var id = req.query.id||''
+	var category = req.body.category||'';
+	var title = req.body.title||'';
+	var description = req.body.description||'';
+	var content = req.body.content||'';
+	if(category === ''){
+		res.render('admin/error',{
+			message:'请选择内容所属类型'
+		});
+		return;
+	}
+	if(title === ''){
+		res.render('admin/error',{
+			message:'请输入内容标题'
+		});
+		return;
+	}
+	if(description === ''){
+		res.render('admin/error',{
+			message:'请输入内容简介'
+		});
+		return;
+	}
+	if(content === ''){
+		res.render('admin/error',{
+			message:'请输入内容'
+		});
+		return;
+	}
+	Content.update({
+				_id:id
+			},{
+				category:category,
+				title:title,
+				description:description,
+				content:content
+		}).then(function(content){
+			res.render('admin/success',{
+				message:'修改内容成功',
+				url:'/admin/content/edit?id='+id
+			});
+		})
 
+})
+//删除内容页接口
+router.get('/content/delete',function(req,res,next){
+	var id = req.query.id||'';
+	Content.remove({
+				_id:id
+			}).then(function(){
+				res.render('admin/success',{
+					message:'删除内容成功',
+					url:'/admin/content'
+				});
+			})
+		
+})
 module.exports = router;
